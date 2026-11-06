@@ -13,17 +13,17 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/sqweek/dialog v0.0.0-20240226140203-065105509627
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.12.1
 	golang.design/x/clipboard v0.7.1
 )
+
+require go.yaml.in/yaml/v3 v3.0.5 // indirect
 
 require (
 	aead.dev/minisign v0.2.0 // indirect
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
 	golang.org/x/image v0.28.0
