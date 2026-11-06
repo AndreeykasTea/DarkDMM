@@ -1,0 +1,117 @@
+package render
+
+import (
+	"sdmm/internal/app/render/brush"
+	"sdmm/internal/app/render/bucket/level/chunk/unit"
+	"sdmm/internal/util"
+)
+
+var (
+	MultiZRendering = true
+	// AnimationsEnabled enables animated icons on the map.
+	AnimationsEnabled = true
+
+	multiZShadow = util.MakeColor(0, 0, 0, .35)
+)
+
+type unitProcessor interface {
+	ProcessUnit(unit.Unit) (visible bool)
+}
+
+func (r *Render) batchBucketUnits(viewBounds util.Bounds) {
+	if MultiZRendering && r.Camera.Level > 1 {
+		for level := 1; level < r.Camera.Level; level++ {
+			r.batchLevel(level, viewBounds, false) // Draw everything below.
+		}
+
+		// Draw a "shadow" overlay to visually separate different levels.
+		brush.RectFilled(viewBounds.X1, viewBounds.Y1, viewBounds.X2, viewBounds.Y2, multiZShadow)
+	}
+
+	r.batchLevel(r.Camera.Level, viewBounds, true) // Draw currently visible level.
+
+}
+
+func (r *Render) batchLevel(level int, viewBounds util.Bounds, withUnitHighlight bool) {
+	visibleLevel := r.bucket.Level(level)
+	if visibleLevel == nil {
+		return
+	}
+
+	// Iterate through every layer to render.
+	for _, layer := range visibleLevel.Layers {
+		// Iterate through chunks with units on the rendered layer.
+		for _, chunk := range visibleLevel.ChunksByLayers[layer] {
+			// Out of bounds = skip.
+			if !chunk.ViewBounds.ContainsV(viewBounds) {
+				continue
+			}
+
+			// Get all units in the chunk for the specific layer.
+			for _, u := range chunk.UnitsByLayers[layer] {
+				// Out of bounds = skip
+				if !u.ViewBounds().ContainsV(viewBounds) {
+					continue
+				}
+				// Process unit
+				if r.unitProcessor != nil && !r.unitProcessor.ProcessUnit(u) {
+					continue
+				}
+
+				sp := u.Sprite()
+				if AnimationsEnabled {
+					sp = u.SpriteAt(animationTicks)
+				}
+				brush.RectTexturedV(
+					u.ViewBounds().X1, u.ViewBounds().Y1, u.ViewBounds().X2, u.ViewBounds().Y2,
+					u.R(), u.G(), u.B(), u.A(),
+					sp.Texture(),
+					sp.U1, sp.V1, sp.U2, sp.V2,
+				)
+
+				if withUnitHighlight {
+					r.batchUnitHighlight(u)
+				}
+			}
+		}
+	}
+}
+
+func (r *Render) batchUnitHighlight(u unit.Unit) {
+	if r.overlay == nil {
+		return
+	}
+	if r.overlay.Units()[u.Instance().Id()] != nil {
+		r.pendingHighlights = append(r.pendingHighlights, u)
+	}
+}
+
+// batchPendingHighlights draws units highlights. They are drawn after the lighting, so they are always visible.
+func (r *Render) batchPendingHighlights() {
+	defer func() {
+		r.pendingHighlights = r.pendingHighlights[:0]
+		if r.overlay != nil {
+			r.overlay.FlushUnits()
+		}
+	}()
+	if r.overlay == nil {
+		return
+	}
+	for _, u := range r.pendingHighlights {
+		highlight := r.overlay.Units()[u.Instance().Id()]
+		if highlight == nil {
+			continue
+		}
+		cr, cg, cb, ca := highlight.Color().RGBA()
+		sp := u.Sprite()
+		if AnimationsEnabled {
+			sp = u.SpriteAt(animationTicks)
+		}
+		brush.RectTexturedV(
+			u.ViewBounds().X1, u.ViewBounds().Y1, u.ViewBounds().X2, u.ViewBounds().Y2,
+			cr, cg, cb, ca,
+			sp.Texture(),
+			sp.U1, sp.V1, sp.U2, sp.V2,
+		)
+	}
+}

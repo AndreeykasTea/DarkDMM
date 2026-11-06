@@ -1,0 +1,29 @@
+.DS_Store
+
+# Log file
+logs/
+*.log
+
+# Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Binaries for programs and plugins
+/internal/sdmm
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.syso
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Build destination folder
+dst/

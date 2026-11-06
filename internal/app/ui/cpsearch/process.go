@@ -1,0 +1,265 @@
+package cpsearch
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"sdmm/internal/app/ui/layout/lnode"
+	"sdmm/internal/dmapi/dmmap"
+	"sdmm/internal/imguiext/icon"
+	"sdmm/internal/imguiext/style"
+	w "sdmm/internal/imguiext/widget"
+
+	"github.com/SpaiR/imgui-go"
+	"github.com/rs/zerolog/log"
+)
+
+func (s *Search) Process(int32) {
+	if s.app.CurrentEditor() == nil {
+		imgui.TextDisabled("Нет открытой карты")
+		return
+	}
+
+	s.showControls()
+	s.showVarSearch()
+
+	imgui.Separator()
+
+	s.showResultsControls()
+
+	imgui.Separator()
+
+	if s.filterActive {
+		s.showFilter()
+		imgui.Separator()
+	}
+
+	if imgui.BeginChild("results") {
+		s.showResults()
+	}
+	imgui.EndChild()
+}
+
+func (s *Search) showControls() {
+	w.Layout{
+		w.Button(icon.Search, s.doSearch).
+			Round(true).
+			Tooltip("Поиск"),
+		w.SameLine(),
+		w.InputTextWithHint("##search", "Тип или ID префаба", &s.prefabId).
+			ButtonClear().
+			Width(-1).
+			OnDeactivatedAfterEdit(func() {
+				s.doSearch()
+			}),
+	}.Build()
+}
+
+func (s *Search) doSearch() {
+	s.vars.active = false
+	if len(s.prefabId) == 0 {
+		s.Free()
+		return
+	}
+
+	s.Free()
+
+	log.Print("searching for:", s.prefabId)
+
+	if strings.HasPrefix(s.prefabId, "/") {
+		for _, prefab := range dmmap.PrefabStorage.GetAllByPath(s.prefabId) {
+			s.resultsAll = append(s.resultsAll, s.app.CurrentEditor().InstancesFindByPrefabId(prefab.Id())...)
+		}
+	} else {
+		prefabId, err := strconv.ParseUint(s.prefabId, 10, 64)
+		if err != nil {
+			return
+		}
+		s.resultsAll = s.app.CurrentEditor().InstancesFindByPrefabId(prefabId)
+	}
+
+	log.Print("found search results:", len(s.resultsAll))
+}
+
+func (s *Search) showResultsControls() {
+	w.Layout{
+		w.Line(
+			s.filterButton(),
+			w.TextDisabled("|"),
+			s.modifyButtons(),
+		),
+		w.SameLine(),
+		w.Layout{
+			w.AlignRight,
+			w.Line(
+				w.Text(fmt.Sprintf("%d/%d", s.selectedResultIdx+1, len(s.results()))),
+				w.TextDisabled("|"),
+				s.jumpButtons(),
+			),
+		},
+	}.Build()
+}
+
+const resultsTableFlags = imgui.TableFlagsBordersInner | imgui.TableFlagsResizable | imgui.TableFlagsNoSavedSettings
+
+func (s *Search) showResults() {
+	if imgui.BeginTableV("search_result", 2, resultsTableFlags, imgui.Vec2{}, 0) {
+		for idx, instance := range s.results() {
+			if idx == s.focusedResultIdx && idx != s.lastFocusedResultIdx {
+				imgui.SetScrollHereY(0)
+				s.lastFocusedResultIdx = s.focusedResultIdx
+			}
+
+			imgui.TableNextColumn()
+
+			selected := idx == s.selectedResultIdx
+			if selected {
+				imgui.PushStyleColor(imgui.StyleColorText, style.ColorGold)
+			}
+			imgui.AlignTextToFramePadding()
+			imgui.Text(fmt.Sprintf("X:%03d Y:%03d Z:%d", instance.Coord().X, instance.Coord().Y, instance.Coord().Z))
+			if desc := s.resultDescription(instance); desc != "" {
+				imgui.SameLine()
+				imgui.TextDisabled(desc)
+			}
+			if selected {
+				imgui.PopStyleColor()
+			}
+
+			imgui.TableNextColumn()
+
+			w.Layout{
+				w.Line(
+					w.Button(fmt.Sprint(icon.Search+"##jump_to_", instance.Id()), func() {
+						s.jumpTo(idx, false)
+					}).Round(true).Tooltip("Перейти"),
+					w.Button(fmt.Sprint(icon.EyeDropper+"##select_", instance.Id()), func() {
+						s.selectInstance(idx)
+					}).Round(true).Tooltip("Выбрать"),
+					w.Button(fmt.Sprint(icon.Eraser+"##delete_", instance.Id()), func() {
+						s.deleteInstance(idx)
+					}).Round(true).Tooltip("Удалить"),
+					w.Button(fmt.Sprint(icon.Repeat+"##replace_", instance.Id()), func() {
+						s.replaceInstance(idx)
+					}).Round(true).Tooltip("Заменить на выбранный"),
+				),
+			}.Build()
+		}
+
+		imgui.EndTable()
+	}
+}
+
+func (s *Search) modifyButtons() w.Layout {
+	return w.Layout{
+		w.Line(
+			w.Button(icon.Eraser, s.doDeleteAll).
+				Round(true).
+				Tooltip("Удалить все"),
+			w.Button(icon.Repeat, s.doReplaceAll).
+				Round(true).
+				Tooltip("Заменить все на выбранный"),
+		),
+	}
+}
+
+func (s *Search) doDeleteAll() {
+	log.Print("do delete all")
+	for _, instance := range s.results() {
+		s.app.CurrentEditor().InstanceDelete(instance)
+	}
+	s.Sync()
+	s.app.CurrentEditor().CommitChanges("Удалить все")
+}
+
+func (s *Search) doReplaceAll() {
+	log.Print("do replace all")
+	if selectedPrefab, ok := s.app.CurrentEditor().SelectedPrefab(); ok {
+		for _, instance := range s.results() {
+			s.app.CurrentEditor().InstanceReplace(instance, selectedPrefab)
+		}
+		s.Sync()
+		s.app.CurrentEditor().CommitChanges("Заменить все")
+	}
+}
+
+func (s *Search) jumpButtons() w.Layout {
+	return w.Layout{
+		w.Button(icon.ArrowUpward, s.jumpToUp).
+			Round(true).
+			Tooltip("Предыдущий результат (Shift+F3)"),
+		w.SameLine(),
+		w.Button(icon.ArrowDownward, s.jumpToDown).
+			Round(true).
+			Tooltip("Следующий результат (F3)"),
+	}
+}
+
+func (s *Search) selectInstance(idx int) {
+	log.Print("do select instance:", idx)
+	instance := s.results()[idx]
+	editor := s.app.CurrentEditor()
+	editor.OverlaySetTileFlick(instance.Coord())
+	editor.OverlaySetInstanceFlick(instance)
+	s.app.ShowLayout(lnode.NameVariables, true)
+	s.app.DoEditInstance(instance)
+	s.selectedResultIdx = idx
+}
+
+func (s *Search) deleteInstance(idx int) {
+	log.Print("do delete instance:", idx)
+	instance := s.results()[idx]
+	editor := s.app.CurrentEditor()
+	editor.InstanceDelete(instance)
+	editor.CommitChanges("Удаление объекта")
+	s.selectedResultIdx = -1
+	s.Sync()
+}
+
+func (s *Search) replaceInstance(idx int) {
+	log.Print("do replace instance:", idx)
+	if selectedPrefab, ok := s.app.CurrentEditor().SelectedPrefab(); ok {
+		instance := s.results()[idx]
+		editor := s.app.CurrentEditor()
+		editor.InstanceReplace(instance, selectedPrefab)
+		editor.CommitChanges("Замена объекта")
+		s.selectedResultIdx = -1
+		s.Sync()
+	}
+}
+
+func (s *Search) jumpTo(idx int, focus bool) {
+	if idx < 0 || idx >= len(s.results()) {
+		return
+	}
+
+	instance := s.results()[idx]
+	editor := s.app.CurrentEditor()
+
+	editor.FocusCamera(instance)
+	editor.OverlaySetTileFlick(instance.Coord())
+	editor.OverlaySetInstanceFlick(instance)
+
+	s.selectedResultIdx = idx
+
+	if focus {
+		s.focusedResultIdx = idx
+	}
+}
+
+func (s *Search) jumpToUp() {
+	idx := s.selectedResultIdx - 1
+	if idx < 0 {
+		idx = len(s.results()) - 1
+	}
+	s.jumpTo(idx, true)
+}
+
+func (s *Search) jumpToDown() {
+	idx := s.selectedResultIdx + 1
+	if idx >= len(s.results()) {
+		idx = 0
+	}
+	s.jumpTo(idx, true)
+}

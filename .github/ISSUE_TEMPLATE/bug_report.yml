@@ -1,0 +1,35 @@
+name: Bug Report
+description: Create a report to help reproduce and fix the issue
+title: "Bug: "
+labels: [ bug ]
+body:
+  - type: input
+    attributes:
+      label: Version
+      description: What version of DarkDMM did you use?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: A bug happened!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Reproduction
+      description: How did you manage to make the error happen?
+      placeholder: How did you do it?
+      value: 1. Run DarkDMM
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: bash
+  - type: markdown
+    attributes:
+      value: The logs can be found with `Help -> Open Logs Folder`.

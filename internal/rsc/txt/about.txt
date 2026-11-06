@@ -1,0 +1,6 @@
+%VERSION%
+Экспериментальное ответвление StrongDMM: https://github.com/AndreeykasTea/DarkDMM
+Оригинал: Copyright (C) 2019-2024, SpaiR
+
+Программа распространяется БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ. Это свободное ПО,
+его можно распространять на условиях GNU General Public License версии 3.
