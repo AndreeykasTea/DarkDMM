@@ -14,7 +14,12 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/sqweek/dialog v0.0.0-20240226140203-065105509627
 	github.com/stretchr/testify v1.10.0
-	golang.design/x/clipboard v0.7.1
+	golang.design/x/clipboard v0.11.0
+)
+
+require (
+	github.com/ebitengine/purego v0.10.1 // indirect
+	golang.design/x/x11 v0.2.0 // indirect
 )
 
 require (
