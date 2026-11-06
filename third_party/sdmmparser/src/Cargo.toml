@@ -1,0 +1,24 @@
+[package]
+name = "sdmmparser"
+version = "2.0.0"
+rust-version = "1.82.0"
+edition = "2021"
+
+[lib]
+name = "sdmmparser"
+path = "lib.rs"
+crate-type = ["staticlib"]
+
+[dependencies]
+serde = "1"
+serde_derive = "1"
+serde_json = "1"
+png = "0.18"
+
+[dependencies.dreammaker]
+git = "https://github.com/SpaceManiac/SpacemanDMM"
+tag = "suite-1.11"
+package = "dreammaker"
+
+[profile.release]
+lto = true
