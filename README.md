@@ -4,6 +4,8 @@
 
 # DarkDMM
 
+[![CI](https://github.com/AndreeykasTea/DarkDMM/actions/workflows/ci.yml/badge.svg)](https://github.com/AndreeykasTea/DarkDMM/actions/workflows/ci.yml)
+
 DarkDMM — экспериментальное ответвление редактора карт [StrongDMM](https://github.com/SpaiR/StrongDMM) для BYOND/SS13
 с русским интерфейсом, синей темой и инструментами, которых не хватало при маппинге.
 

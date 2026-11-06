@@ -1,19 +1,15 @@
-name: Feature Request
-description: Suggest an idea for this project
-title: "Feature Request: "
+name: Предложение
+description: Предложить новую функцию или улучшение
+title: "Идея: "
 labels: [ enhancement ]
 body:
   - type: textarea
     attributes:
-      label: Problem to be solved
-      description: Present a concise description of the problem to be addressed by this feature request.
+      label: Какую задачу это решает?
+      description: Что сейчас неудобно или невозможно.
     validations:
       required: true
   - type: textarea
     attributes:
-      label: Sugest a solution
-      description: A concise description of your preferred solution.
-  - type: markdown
-    attributes:
-      value: |
-        Post additional information or images if you need so. If there are multiple solutions, please present each one separately. Save comparisons for the very end.
+      label: Как это должно работать?
+      description: Ваш вариант решения, можно приложить скриншоты.
