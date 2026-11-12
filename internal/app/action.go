@@ -236,6 +236,11 @@ func (a *app) LightingEnabled() bool {
 	return lighting.Current.Enabled
 }
 
+// ShowUnderFloor returns true if objects under floor tiles are visible.
+func (a *app) ShowUnderFloor() bool {
+	return render.ShowUnderFloor
+}
+
 // AnimationsEnabled returns true if animated icons are enabled.
 func (a *app) AnimationsEnabled() bool {
 	return render.AnimationsEnabled

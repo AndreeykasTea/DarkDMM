@@ -19,10 +19,16 @@ var (
 	BaseTurf *dmmprefab.Prefab
 
 	environment *dmenv.Dme
+
+	// underfloorModelCurrent shows how the loaded code base hides objects under floors.
+	underfloorModelCurrent underfloorModel
+	isBaystation           bool
 )
 
 func Init(dme *dmenv.Dme) {
 	environment = dme
+	isBaystation = detectBaystation()
+	underfloorModelCurrent = detectUnderfloorModel()
 
 	WorldIconSize = dme.Objects["/world"].Vars.IntV("icon_size", 32)
 
@@ -49,6 +55,8 @@ func basePath(dme *dmenv.Dme, varName, fallback string) string {
 
 func Free() {
 	environment = nil
+	underfloorModelCurrent = underfloorUnknown
+	isBaystation = false
 	WorldIconSize = 0
 	BaseArea = nil
 	BaseTurf = nil

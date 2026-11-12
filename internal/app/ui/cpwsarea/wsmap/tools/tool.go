@@ -77,7 +77,17 @@ func (t *tool) basicPrefabAdd(tile *dmmap.Tile, prefab *dmmprefab.Prefab) {
 			tile.InstancesRemoveByPath("/turf")
 		}
 	} else if dm.IsPath(prefab.Path(), "/obj") {
-		tile.InstancesRemoveByPath("/obj")
+		// Objects which the mapper doesn't see under a floor must stay.
+		// Instances are collected first: a removal shifts the slice of the tile.
+		var toRemove dmmap.Instances
+		for _, instance := range tile.Instances() {
+			if p := instance.Prefab(); dm.IsPath(p.Path(), "/obj") && !ed.IsHiddenUnderFloor(tile, p) {
+				toRemove = append(toRemove, instance)
+			}
+		}
+		for _, instance := range toRemove {
+			tile.InstancesRemoveByInstance(instance)
+		}
 	}
 
 	tile.InstancesAdd(prefab)

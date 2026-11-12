@@ -6,6 +6,7 @@ import (
 	"sdmm/internal/dmapi/dm"
 	"sdmm/internal/dmapi/dmmap"
 	"sdmm/internal/dmapi/dmmap/dmmdata"
+	"sdmm/internal/dmapi/dmmap/dmmdata/dmmprefab"
 	"sdmm/internal/util"
 
 	"github.com/rs/zerolog/log"
@@ -30,7 +31,8 @@ func (c *Clipboard) Free() {
 	log.Print("clipboard free")
 }
 
-func (c *Clipboard) Copy(pathsFilter *dm.PathsFilter, dmm *dmmap.Dmm, tiles []util.Point) {
+// Copy stores tiles in the buffer. Objects for which the skip function returns true are not copied.
+func (c *Clipboard) Copy(pathsFilter *dm.PathsFilter, dmm *dmmap.Dmm, tiles []util.Point, skip func(*dmmap.Tile, *dmmprefab.Prefab) bool) {
 	if len(tiles) == 0 {
 		return
 	}
@@ -45,11 +47,12 @@ func (c *Clipboard) Copy(pathsFilter *dm.PathsFilter, dmm *dmmap.Dmm, tiles []ut
 			continue
 		}
 
-		tile := dmm.GetTile(pos).Copy()
+		original := dmm.GetTile(pos)
+		tile := original.Copy()
 
 		var prefabs dmmdata.Prefabs
 		for _, instance := range tile.Instances() {
-			if pathsFilter.IsVisiblePath(instance.Prefab().Path()) {
+			if pathsFilter.IsVisiblePath(instance.Prefab().Path()) && !skip(original, instance.Prefab()) {
 				prefabs = append(prefabs, instance.Prefab())
 			}
 		}

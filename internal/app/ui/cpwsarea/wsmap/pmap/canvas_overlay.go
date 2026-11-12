@@ -71,6 +71,8 @@ func (p *PaneMap) processCanvasOverlayTools() {
 }
 
 func (p *PaneMap) processCanvasOverlayFlick() {
+	p.editor.ProcessUnderFloorReveals()
+
 	for idx, a := range p.editor.FlickAreas() {
 		delta := imgui.Time() - a.Time
 		col := flickColor(overlay.ColorFlickTileFill, delta)

@@ -8,6 +8,9 @@ func (p *PaneMap) ProcessUnit(u unit.Unit) bool {
 	if p.app.PathsFilter().IsHiddenPath(u.Instance().Prefab().Path()) {
 		return false
 	}
+	if p.IsUnderFloorHidden(u.CoveredBy(), u.Instance().Coord()) {
+		return false
+	}
 	p.locateHoveredInstance(u)
 	return true
 }

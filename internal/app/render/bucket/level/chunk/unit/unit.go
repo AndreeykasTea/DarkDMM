@@ -21,6 +21,19 @@ type Unit struct {
 	viewBounds util.Bounds
 
 	r, g, b, a float32
+
+	// coveredBy is a path of the floor, which hides the object in the game.
+	coveredBy string
+}
+
+// CoveredBy returns a path of the turf, which hides the object in the game, or an empty string.
+func (u Unit) CoveredBy() string {
+	return u.coveredBy
+}
+
+// SetCoveredBy sets a turf, which hides the object in the game.
+func (u *Unit) SetCoveredBy(turfPath string) {
+	u.coveredBy = turfPath
 }
 
 func (u Unit) Sprite() *dmicon.Sprite {
@@ -96,6 +109,7 @@ func Make(x, y int, i *dmminstance.Instance, iconSize int) Unit {
 		sp, i, state, dir, countLayer(i.Prefab()),
 		util.Bounds{X1: x1, Y1: y1, X2: x2, Y2: y2},
 		r, g, b, a,
+		"",
 	}
 }
 

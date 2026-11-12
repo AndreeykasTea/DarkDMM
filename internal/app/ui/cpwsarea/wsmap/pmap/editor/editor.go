@@ -27,6 +27,8 @@ type Editor struct {
 	flickAreas    []overlay.FlickArea
 	flickInstance []overlay.FlickInstance
 
+	underFloorReveals map[util.Point]float64
+
 	areasZones []AreaZone
 
 	// changes is incremented on every map modification (including undo/redo). Used by the autosave.
@@ -85,6 +87,7 @@ type attachedMap interface {
 	Size() imgui.Vec2
 
 	Canvas() *canvas.Canvas
+	IsUnderFloorHidden(cover string, coord util.Point) bool
 	CanvasState() *canvas.State
 	CanvasControl() *canvas.Control
 	CanvasOverlay() *canvas.Overlay
@@ -179,6 +182,16 @@ func (e *Editor) Prefs() prefs.Prefs {
 // LightingSourcesCount returns the number of light sources on the active level, or -1 if it's not computed yet.
 func (e *Editor) LightingSourcesCount() int {
 	return e.pMap.Canvas().Render().LightingSourcesCount()
+}
+
+// IsUnderFloorHidden returns true if an object on the tile covered by the provided turf is hidden at the moment.
+func (e *Editor) IsUnderFloorHidden(cover string, coord util.Point) bool {
+	return e.pMap.IsUnderFloorHidden(cover, coord)
+}
+
+// IsHiddenUnderFloor returns true if the mapper doesn't see the object on the tile because it's under a floor.
+func (e *Editor) IsHiddenUnderFloor(tile *dmmap.Tile, prefab *dmmprefab.Prefab) bool {
+	return dmmap.HidesUnderFloor(prefab) && e.pMap.IsUnderFloorHidden(dmmap.TileCover(tile), tile.Coord)
 }
 
 // LightingUnpoweredCount returns the number of lamps on the current level, which don't shine because of the area power.

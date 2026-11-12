@@ -49,8 +49,13 @@ func (c *Chunk) Update(dmm *dmmap.Dmm, level int) {
 	for x := c.MapBounds.X1; x <= c.MapBounds.X2; x++ {
 		for y := c.MapBounds.Y1; y <= c.MapBounds.Y2; y++ {
 			x, y := int(x), int(y)
-			for _, i := range dmm.GetTile(util.Point{X: x, Y: y, Z: level}).Instances() {
+			tile := dmm.GetTile(util.Point{X: x, Y: y, Z: level})
+			cover := dmmap.TileCover(tile)
+			for _, i := range tile.Instances() {
 				u := unit.Make(x, y, i, dmmap.WorldIconSize)
+				if cover != "" && dmmap.HidesUnderFloor(i.Prefab()) {
+					u.SetCoveredBy(cover)
+				}
 				unitsByLayers[u.Layer()] = append(unitsByLayers[u.Layer()], u)
 			}
 		}

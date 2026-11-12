@@ -113,6 +113,8 @@ type PaneMap struct {
 
 	tmpLastHoveredInstance *dmminstance.Instance
 
+	underFloor underFloorView
+
 	accessWin    accessWindow
 	replaceWin   replaceWindow
 	lintWin      lintWindow
@@ -223,6 +225,8 @@ func (p *PaneMap) Process() {
 	}
 
 	p.canvas.Render().SetActiveLevel(p.dmm, p.activeLevel)
+
+	p.updateUnderFloorView()
 
 	p.canvasControl.Process(p.size)
 	p.canvas.Process(p.size)

@@ -10,6 +10,8 @@ var (
 	MultiZRendering = true
 	// AnimationsEnabled enables animated icons on the map.
 	AnimationsEnabled = true
+	// ShowUnderFloor shows cables and pipes under floor tiles, which are not visible in the game.
+	ShowUnderFloor = false
 
 	multiZShadow = util.MakeColor(0, 0, 0, .35)
 )

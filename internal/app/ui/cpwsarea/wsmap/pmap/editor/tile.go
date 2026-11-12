@@ -11,9 +11,9 @@ import (
 )
 
 // TileCopySelected copies currently selected tiles.
-// Respects a dm.PathsFilter state.
+// Respects a dm.PathsFilter state and doesn't take objects hidden under floors.
 func (e *Editor) TileCopySelected() {
-	e.app.Clipboard().Copy(e.app.PathsFilter(), e.dmm, tools.SelectedTiles())
+	e.app.Clipboard().Copy(e.app.PathsFilter(), e.dmm, tools.SelectedTiles(), e.IsHiddenUnderFloor)
 }
 
 // TilePasteSelected does a paste to the currently hovered tile.
@@ -65,9 +65,9 @@ func (e *Editor) TilePasteSelected() {
 		currTilePrefabs := tile.Instances().Prefabs()
 		newTilePrefabs := make(dmmdata.Prefabs, 0, len(currTilePrefabs))
 
-		// Keep instances which are not filtered out.
+		// Keep instances which are filtered out or not visible under a floor.
 		for _, prefab := range currTilePrefabs {
-			if !pastedData.Filter.IsVisiblePath(prefab.Path()) {
+			if !pastedData.Filter.IsVisiblePath(prefab.Path()) || e.IsHiddenUnderFloor(tile, prefab) {
 				newTilePrefabs = append(newTilePrefabs, prefab)
 			}
 		}
@@ -91,10 +91,18 @@ func (e *Editor) TileCutSelected() {
 }
 
 // TileDeleteSelected deletes the last hovered by the mouse tile.
-// Respects a dm.PathsFilter state.
+// Respects a dm.PathsFilter state and doesn't touch objects hidden under floors:
+// a selected area shows them, but a hovered tile doesn't.
 func (e *Editor) TileDeleteSelected() {
-	for _, tile := range tools.SelectedTiles() {
-		e.TileDelete(tile)
+	for _, coord := range tools.SelectedTiles() {
+		tile := e.dmm.GetTile(coord)
+		for _, instance := range tile.Instances() {
+			prefab := instance.Prefab()
+			if e.app.PathsFilter().IsVisiblePath(prefab.Path()) && !e.IsHiddenUnderFloor(tile, prefab) {
+				tile.InstancesRemoveByPath(prefab.Path())
+			}
+		}
+		tile.InstancesRegenerate()
 	}
 }
 

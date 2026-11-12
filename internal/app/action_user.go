@@ -409,6 +409,12 @@ func (a *app) DoOpenLintWindow() {
 	}
 }
 
+// DoShowUnderFloor toggles visibility of objects under floor tiles.
+func (a *app) DoShowUnderFloor() {
+	render.ShowUnderFloor = !render.ShowUnderFloor
+	log.Print("do show under floor:", render.ShowUnderFloor)
+}
+
 // DoAnimations toggles animated icons on maps.
 func (a *app) DoAnimations() {
 	render.AnimationsEnabled = !render.AnimationsEnabled

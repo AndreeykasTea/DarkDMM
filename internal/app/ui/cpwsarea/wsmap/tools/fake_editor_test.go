@@ -13,6 +13,9 @@ import (
 
 // fakeEditor is a minimal editor to test tools without the UI.
 type fakeEditor struct {
+	// hiddenPath is a path of objects, which the mapper does not see under a floor.
+	hiddenPath string
+
 	dmm      *dmmap.Dmm
 	env      *dmenv.Dme
 	selected *dmmprefab.Prefab
@@ -29,10 +32,13 @@ func (f *fakeEditor) OverlayPushArea(util.Bounds, util.Color, util.Color) {}
 func (f *fakeEditor) InstanceSelect(*dmminstance.Instance)                {}
 func (f *fakeEditor) InstanceDelete(*dmminstance.Instance)                {}
 func (f *fakeEditor) TileDeleteSelected()                                 {}
-func (f *fakeEditor) HoveredInstance() *dmminstance.Instance              { return nil }
-func (f *fakeEditor) ZoomLevel() float32                                  { return 1 }
-func (f *fakeEditor) Prefs() prefs.Prefs                                  { return prefs.Prefs{} }
-func (f *fakeEditor) SelectedPrefab() (*dmmprefab.Prefab, bool)           { return f.selected, f.selected != nil }
+func (f *fakeEditor) IsHiddenUnderFloor(_ *dmmap.Tile, p *dmmprefab.Prefab) bool {
+	return f.hiddenPath != "" && p.Path() == f.hiddenPath
+}
+func (f *fakeEditor) HoveredInstance() *dmminstance.Instance    { return nil }
+func (f *fakeEditor) ZoomLevel() float32                        { return 1 }
+func (f *fakeEditor) Prefs() prefs.Prefs                        { return prefs.Prefs{} }
+func (f *fakeEditor) SelectedPrefab() (*dmmprefab.Prefab, bool) { return f.selected, f.selected != nil }
 func (f *fakeEditor) TileReplace(coord util.Point, prefabs dmmdata.Prefabs) {
 	f.dmm.GetTile(coord).InstancesSet(prefabs)
 }

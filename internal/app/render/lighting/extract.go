@@ -234,9 +234,10 @@ func extractInfo(p *dmmprefab.Prefab) *prefabInfo {
 	}
 
 	// The Baystation lighting model has light_outer_range instead of light_range.
-	// Fixtures with a bulb type belong to this model in any case.
+	// Bay fixtures with a bulb type belong to this model in any case. TG fixtures have light_type too,
+	// but they keep their light in brightness and bulb_power.
 	_, hasBulbType := vars.Value("light_type")
-	if isBayVars(vars) || (hasBulbType && dm.IsPath(path, fixturePath)) {
+	if isBayVars(vars) || (hasBulbType && dm.IsPath(path, fixturePath) && isBayEnvironment()) {
 		extractBaySpecial(info, path, vars)
 		info.isDoor = dm.IsPath(path, "/obj/machinery/door")
 		info.hasLight, info.needsPower, info.light = extractBayAtom(path, vars)

@@ -6,7 +6,7 @@ var (
 	Title = "DarkDMM"
 	// AppDir is a name of the folder with settings, logs and backups. Every build variant has its own.
 	AppDir   = "DarkDMM"
-	Version  = "2.18-dark7"
+	Version  = "2.18-dark10"
 	Revision = Undefined
 	GitHub   = "https://github.com/AndreeykasTea/DarkDMM"
 	// Manifest is empty: self updates are disabled in DarkDMM, see app/update.go.

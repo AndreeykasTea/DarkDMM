@@ -108,8 +108,7 @@ func isBayVars(vars *dmvars.Variables) bool {
 
 // isBayEnvironment returns true if the loaded code base uses the Baystation lighting model.
 func isBayEnvironment() bool {
-	atom, ok := dmmap.TypeVars("/atom")
-	return ok && isBayVars(atom)
+	return dmmap.IsBaystation()
 }
 
 // PowerAware returns true if the lighting of the loaded code base depends on the area power.

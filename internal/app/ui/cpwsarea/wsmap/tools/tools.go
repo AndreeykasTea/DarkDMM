@@ -64,6 +64,7 @@ type editor interface {
 	TileReplace(coord util.Point, prefabs dmmdata.Prefabs)
 
 	TileDeleteSelected()
+	IsHiddenUnderFloor(tile *dmmap.Tile, prefab *dmmprefab.Prefab) bool
 	TileDelete(util.Point)
 	HoveredInstance() *dmminstance.Instance
 	ZoomLevel() float32

@@ -232,6 +232,7 @@ func (p *PaneMap) showLintContent() {
 			}
 			if imgui.SmallButton(fmt.Sprintf("%d,%d,%d", issue.Coord.X, issue.Coord.Y, issue.Coord.Z)) {
 				p.editor.FocusCameraOnPosition(issue.Coord)
+				p.editor.RevealUnderFloor(issue.Coord)
 			}
 			if imgui.IsItemHovered() {
 				imgui.SetTooltip("Показать на карте")

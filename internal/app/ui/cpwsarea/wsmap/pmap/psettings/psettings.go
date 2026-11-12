@@ -5,6 +5,7 @@ import (
 	"sdmm/internal/app/window"
 	"sdmm/internal/dmapi/dm"
 	"sdmm/internal/dmapi/dmmap"
+	"sdmm/internal/util"
 
 	"github.com/SpaiR/imgui-go"
 )
@@ -23,6 +24,7 @@ type editor interface {
 	LightingSourcesCount() int
 	LightingUnpoweredCount() int
 	LightingPowerAware() bool
+	IsUnderFloorHidden(cover string, coord util.Point) bool
 }
 
 type Panel struct {

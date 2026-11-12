@@ -47,6 +47,7 @@ type app interface {
 	DoMultiZRendering()
 	DoLighting()
 	DoAnimations()
+	DoShowUnderFloor()
 	DoOpenReplaceWindow()
 	DoOpenLintWindow()
 	DoOpenTemplatesWindow()
@@ -86,6 +87,7 @@ type app interface {
 	MultiZRendering() bool
 	LightingEnabled() bool
 	AnimationsEnabled() bool
+	ShowUnderFloor() bool
 	MirrorCanvasCamera() bool
 }
 
@@ -255,6 +257,9 @@ func (m *Menu) Process() {
 				IconEmpty().
 				Selected(m.app.MirrorCanvasCamera()),
 			w.Separator(),
+			w.MenuItem("Провода и трубы под полом", m.app.DoShowUnderFloor).
+				IconEmpty().
+				Selected(m.app.ShowUnderFloor()),
 			w.MenuItem("Анимации иконок", m.app.DoAnimations).
 				IconEmpty().
 				Selected(m.app.AnimationsEnabled()),

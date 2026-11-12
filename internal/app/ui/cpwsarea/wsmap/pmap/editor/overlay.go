@@ -48,8 +48,39 @@ func (e *Editor) OverlaySetTileFlick(coord util.Point) {
 // Unlike the PushOverlayTile or PushOverlayArea methods, flick overlay is set only once.
 // It will exist until it disappears.
 func (e *Editor) OverlaySetInstanceFlick(i *dmminstance.Instance) {
+	e.RevealUnderFloor(i.Coord())
 	e.flickInstance = append(e.flickInstance, overlay.FlickInstance{
 		Time:     imgui.Time(),
 		Instance: i,
 	})
+}
+
+// underFloorRevealSec is how long a tile shows objects under its floor after a jump to it.
+const underFloorRevealSec = 10
+
+// RevealUnderFloor shows for a while objects under the floor of the tile: the mapper was sent to look at them.
+func (e *Editor) RevealUnderFloor(coord util.Point) {
+	if e.underFloorReveals == nil {
+		e.underFloorReveals = make(map[util.Point]float64)
+	}
+	e.underFloorReveals[coord] = imgui.Time() + underFloorRevealSec
+}
+
+// IsUnderFloorRevealed returns true if objects under the floor of the tile are shown after a jump to it.
+func (e *Editor) IsUnderFloorRevealed(coord util.Point) bool {
+	_, ok := e.underFloorReveals[coord]
+	return ok
+}
+
+// ProcessUnderFloorReveals removes expired reveals. Must be called once per frame.
+func (e *Editor) ProcessUnderFloorReveals() {
+	if len(e.underFloorReveals) == 0 {
+		return
+	}
+	now := imgui.Time()
+	for coord, until := range e.underFloorReveals {
+		if until < now {
+			delete(e.underFloorReveals, coord)
+		}
+	}
 }
