@@ -30,7 +30,7 @@ func TestBayRealMaps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !func() bool { dmmap.PrefabStorage.Free(); dmmap.Init(env); return isBayEnvironment() }() {
+	if !func() bool { dmmap.PrefabStorage.Free(); dmmap.Init(env); return dmmap.IsBaystation() }() {
 		t.Fatal("the environment is not detected as Baystation")
 	}
 	for _, leftover := range mustGlob(t, filepath.Join(filepath.Dir(dmePath), ".~dmm_env_*")) {

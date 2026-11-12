@@ -28,9 +28,11 @@ func TestUnderFloorRule(t *testing.T) {
 		{"the floor is hidden by the filter", floor, true, empty, false, false},
 		{"a jump from the search or the linter", floor, false, empty, true, false},
 		{"the option or the route tool", floor, false, underFloorView{all: true}, false, false},
-		{"inside of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 4, Y1: 4, X2: 6, Y2: 6}}, false, false},
-		{"on the border of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 5, Y1: 5, X2: 5, Y2: 5}}, false, false},
-		{"out of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 6, Y1: 6, X2: 8, Y2: 8}}, false, true},
+		{"inside of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 4, Y1: 4, X2: 6, Y2: 6}, areaLevel: 1}, false, false},
+		// Bounds of the selection have no Z level: another level of the map must not be shown.
+		{"the selection on another level", floor, false, underFloorView{area: &util.Bounds{X1: 4, Y1: 4, X2: 6, Y2: 6}, areaLevel: 2}, false, true},
+		{"on the border of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 5, Y1: 5, X2: 5, Y2: 5}, areaLevel: 1}, false, false},
+		{"out of the selection", floor, false, underFloorView{area: &util.Bounds{X1: 6, Y1: 6, X2: 8, Y2: 8}, areaLevel: 1}, false, true},
 		{"the opened object", floor, false, underFloorView{instanceTile: &coord}, false, false},
 		{"another opened object", floor, false, underFloorView{instanceTile: &util.Point{X: 1, Y: 1, Z: 1}}, false, true},
 	}
@@ -48,19 +50,19 @@ func TestMakeUnderFloorView(t *testing.T) {
 		return dmmap.PrefabStorage.Get(path, dmvars.FromParent(mv.ToImmutable()))
 	}
 
-	if makeUnderFloorView(false, false, nil, nil, nil).all {
+	if makeUnderFloorView(false, false, nil, nil, 0, nil).all {
 		t.Error("nothing is selected")
 	}
-	if !makeUnderFloorView(true, false, nil, nil, nil).all {
+	if !makeUnderFloorView(true, false, nil, nil, 0, nil).all {
 		t.Error("the option")
 	}
-	if !makeUnderFloorView(false, true, nil, nil, nil).all {
+	if !makeUnderFloorView(false, true, nil, nil, 0, nil).all {
 		t.Error("the route tool")
 	}
-	if !makeUnderFloorView(false, false, prefab("/obj/structure/cable/green"), nil, nil).all {
+	if !makeUnderFloorView(false, false, prefab("/obj/structure/cable/green"), nil, 0, nil).all {
 		t.Error("a selected cable")
 	}
-	if makeUnderFloorView(false, false, prefab("/obj/structure/table"), nil, nil).all {
+	if makeUnderFloorView(false, false, prefab("/obj/structure/table"), nil, 0, nil).all {
 		t.Error("a selected table")
 	}
 }

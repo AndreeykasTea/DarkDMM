@@ -13,7 +13,7 @@ import (
 // TileCopySelected copies currently selected tiles.
 // Respects a dm.PathsFilter state and doesn't take objects hidden under floors.
 func (e *Editor) TileCopySelected() {
-	e.app.Clipboard().Copy(e.app.PathsFilter(), e.dmm, tools.SelectedTiles(), e.IsHiddenUnderFloor)
+	e.app.Clipboard().Copy(e.app.PathsFilter(), e.dmm, tools.SelectedTiles(), e)
 }
 
 // TilePasteSelected does a paste to the currently hovered tile.
@@ -65,9 +65,11 @@ func (e *Editor) TilePasteSelected() {
 		currTilePrefabs := tile.Instances().Prefabs()
 		newTilePrefabs := make(dmmdata.Prefabs, 0, len(currTilePrefabs))
 
-		// Keep instances which are filtered out or not visible under a floor.
+		// Keep instances which are filtered out. Objects not visible under the floor stay only when they were
+		// not visible on the copy too: otherwise the copied cables and pipes replace them, not double them.
+		keepUnderFloor := pastedData.UnderFloorHidden[tileCopy.Coord]
 		for _, prefab := range currTilePrefabs {
-			if !pastedData.Filter.IsVisiblePath(prefab.Path()) || e.IsHiddenUnderFloor(tile, prefab) {
+			if !pastedData.Filter.IsVisiblePath(prefab.Path()) || (keepUnderFloor && e.IsHiddenUnderFloor(tile, prefab)) {
 				newTilePrefabs = append(newTilePrefabs, prefab)
 			}
 		}
@@ -96,11 +98,16 @@ func (e *Editor) TileCutSelected() {
 func (e *Editor) TileDeleteSelected() {
 	for _, coord := range tools.SelectedTiles() {
 		tile := e.dmm.GetTile(coord)
+		// By instances, not by paths: a path removes subtypes and objects with the same path under the floor too.
+		var toRemove dmmap.Instances
 		for _, instance := range tile.Instances() {
 			prefab := instance.Prefab()
 			if e.app.PathsFilter().IsVisiblePath(prefab.Path()) && !e.IsHiddenUnderFloor(tile, prefab) {
-				tile.InstancesRemoveByPath(prefab.Path())
+				toRemove = append(toRemove, instance)
 			}
+		}
+		for _, instance := range toRemove {
+			tile.InstancesRemoveByInstance(instance)
 		}
 		tile.InstancesRegenerate()
 	}

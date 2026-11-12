@@ -16,10 +16,11 @@ type Job struct {
 }
 
 var (
-	reJobBlock   = regexp.MustCompile(`(?m)^/datum/job/[\w/]+\s*$`)
-	reJobTitle   = regexp.MustCompile(`(?m)^\s+title\s*=\s*(.+?)\s*$`)
-	reJobAccess  = regexp.MustCompile(`(?m)^\s+access\s*=\s*list\(([^)]*)\)`)
-	reTitleDef   = regexp.MustCompile(`(?m)^\s*#define\s+(JOB_TITLE_\w+)\s+"([^"]+)"`)
+	reJobBlock  = regexp.MustCompile(`(?m)^/datum/job/[\w/]+\s*$`)
+	reJobTitle  = regexp.MustCompile(`(?m)^\s+title\s*=\s*(.+?)\s*$`)
+	reJobAccess = regexp.MustCompile(`(?m)^\s+access\s*=\s*list\(([^)]*)\)`)
+	// Titles could have escaped quotes: "Представитель \"Нанотрейзен\"".
+	reTitleDef   = regexp.MustCompile(`(?m)^\s*#define\s+(JOB_TITLE_\w+)\s+"((?:[^"\\\n]|\\.)+)"`)
 	reAccessName = regexp.MustCompile(`ACCESS_[A-Za-z0-9_]+`)
 )
 
@@ -49,7 +50,7 @@ func loadJobs(rootDir string, byDefine map[string]*Access) []Job {
 		src := string(data)
 		for _, m := range reTitleDef.FindAllStringSubmatch(src, -1) {
 			if _, ok := titles[m[1]]; !ok {
-				titles[m[1]] = m[2]
+				titles[m[1]] = unescapeDM(m[2])
 			}
 		}
 		if strings.Contains(src, "/datum/job/") {
@@ -101,4 +102,19 @@ func loadJobs(rootDir string, byDefine map[string]*Access) []Job {
 
 	sort.Slice(jobs, func(i, j int) bool { return jobs[i].Name < jobs[j].Name })
 	return jobs
+}
+
+// unescapeDM removes escapes of a DM string: \" -> ", \\ -> \.
+func unescapeDM(s string) string {
+	if !strings.Contains(s, `\`) {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\\' && i+1 < len(s) {
+			i++
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
 }

@@ -24,7 +24,7 @@ type editor interface {
 	LightingSourcesCount() int
 	LightingUnpoweredCount() int
 	LightingPowerAware() bool
-	IsUnderFloorHidden(cover string, coord util.Point) bool
+	IsCoverHidingAt(cover string, coord util.Point) bool
 }
 
 type Panel struct {

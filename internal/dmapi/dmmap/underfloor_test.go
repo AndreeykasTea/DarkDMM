@@ -32,11 +32,44 @@ func TestHidesUnderFloor(t *testing.T) {
 		{underfloorPrefab("/obj/machinery/atmospherics/unary/vent_pump", "level", "1"), false},
 		{underfloorPrefab("/obj/structure/table"), false},
 		{underfloorPrefab("/obj/structure/cable_coil_thing"), false},
+		// Paradise objects with the undertile element.
+		{underfloorPrefab("/obj/machinery/navbeacon", "level", "1"), true},
+		{underfloorPrefab("/obj/machinery/navbeacon/invisible", "level", "1", "theoretical", "1"), false},
+		{underfloorPrefab("/obj/structure/safe/floor", "level", "1"), true},
+		{underfloorPrefab("/obj/structure/logistics_pipe/junction", "level", "1"), true},
+		{underfloorPrefab("/obj/item/storage/backpack/satchel_flat", "level", "1"), true},
+		{underfloorPrefab("/obj/machinery/magnetic_module", "level", "2"), false},
+		{underfloorPrefab("/obj/structure/safe", "level", "1"), false},
 	}
 	for _, c := range cases {
 		if got := HidesUnderFloor(c.prefab); got != c.want {
 			t.Errorf("%s: %t", c.prefab.Path(), got)
 		}
+	}
+}
+
+func TestHidesUnderParadiseWall(t *testing.T) {
+	PrefabStorage.Free()
+	underfloorModelCurrent = underfloorAccessibility
+	defer func() { underfloorModelCurrent = underfloorUnknown }()
+
+	visible := underfloorPrefab("/obj/machinery/atmospherics/pipe/simple/visible", "level", "2")
+	if HidesUnder(visible, "/turf/simulated/floor/plasteel") {
+		t.Error("a visible pipe on a floor")
+	}
+	if !HidesUnder(visible, "/turf/simulated/wall/r_wall") {
+		t.Error("a visible pipe in a wall is hidden in the game")
+	}
+	if HidesUnder(underfloorPrefab("/obj/structure/table"), "/turf/simulated/wall") {
+		t.Error("a table")
+	}
+	if HidesUnder(underfloorPrefab("/obj/structure/cable"), "") {
+		t.Error("nothing covers the tile")
+	}
+
+	underfloorModelCurrent = underfloorBay
+	if HidesUnder(visible, "/turf/simulated/wall") {
+		t.Error("Baystation pipes don't change their level in walls")
 	}
 }
 

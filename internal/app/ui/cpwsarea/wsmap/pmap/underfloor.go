@@ -18,14 +18,17 @@ type underFloorView struct {
 	all bool
 	// area is a selected area in tile coordinates: everything selected must be visible, since it'll be changed.
 	area *util.Bounds
+	// areaLevel is the Z level of the selected area: bounds don't have it.
+	areaLevel int
 	// instanceTile is a tile of the object opened in the editor panels.
 	instanceTile *util.Point
 }
 
-func makeUnderFloorView(showOption, routeTool bool, selectedPrefab *dmmprefab.Prefab, area *util.Bounds, instanceTile *util.Point) underFloorView {
+func makeUnderFloorView(showOption, routeTool bool, selectedPrefab *dmmprefab.Prefab, area *util.Bounds, areaLevel int, instanceTile *util.Point) underFloorView {
 	return underFloorView{
 		all:          showOption || routeTool || (selectedPrefab != nil && dmmap.HidesUnderFloor(selectedPrefab)),
 		area:         area,
+		areaLevel:    areaLevel,
 		instanceTile: instanceTile,
 	}
 }
@@ -37,7 +40,7 @@ func (v underFloorView) shows(coord util.Point) bool {
 	if v.instanceTile != nil && *v.instanceTile == coord {
 		return true
 	}
-	return v.area != nil && v.area.Contains(float32(coord.X), float32(coord.Y))
+	return v.area != nil && v.areaLevel == coord.Z && v.area.Contains(float32(coord.X), float32(coord.Y))
 }
 
 // isUnderFloorHidden is the rule of visibility: floorHidden means that the floor is hidden by the paths filter.
@@ -52,9 +55,11 @@ func (p *PaneMap) updateUnderFloorView() {
 	}
 
 	var area *util.Bounds
+	areaLevel := 0
 	if grab, ok := tools.Selected().(*tools.ToolGrab); ok && grab.HasSelectedArea() {
 		bounds := grab.Bounds()
 		area = &bounds
+		areaLevel = grab.Level()
 	}
 
 	var instanceTile *util.Point
@@ -63,11 +68,11 @@ func (p *PaneMap) updateUnderFloorView() {
 		instanceTile = &coord
 	}
 
-	p.underFloor = makeUnderFloorView(render.ShowUnderFloor, tools.IsSelected(tools.TNRoute), selectedPrefab, area, instanceTile)
+	p.underFloor = makeUnderFloorView(render.ShowUnderFloor, tools.IsSelected(tools.TNRoute), selectedPrefab, area, areaLevel, instanceTile)
 }
 
-// IsUnderFloorHidden returns true if an object on the tile covered by the provided turf is hidden at the moment.
-func (p *PaneMap) IsUnderFloorHidden(cover string, coord util.Point) bool {
+// IsCoverHidingAt returns true if the turf (see dmmap.TileCover) hides objects under it on the tile at the moment.
+func (p *PaneMap) IsCoverHidingAt(cover string, coord util.Point) bool {
 	if cover == "" {
 		return false
 	}

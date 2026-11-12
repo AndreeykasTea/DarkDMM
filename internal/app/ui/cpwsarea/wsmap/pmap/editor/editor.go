@@ -87,7 +87,7 @@ type attachedMap interface {
 	Size() imgui.Vec2
 
 	Canvas() *canvas.Canvas
-	IsUnderFloorHidden(cover string, coord util.Point) bool
+	IsCoverHidingAt(cover string, coord util.Point) bool
 	CanvasState() *canvas.State
 	CanvasControl() *canvas.Control
 	CanvasOverlay() *canvas.Overlay
@@ -184,14 +184,22 @@ func (e *Editor) LightingSourcesCount() int {
 	return e.pMap.Canvas().Render().LightingSourcesCount()
 }
 
-// IsUnderFloorHidden returns true if an object on the tile covered by the provided turf is hidden at the moment.
-func (e *Editor) IsUnderFloorHidden(cover string, coord util.Point) bool {
-	return e.pMap.IsUnderFloorHidden(cover, coord)
+// IsCoverHidingAt returns true if the turf (see dmmap.TileCover) hides objects under it on the tile at the moment.
+// Whether the object is hidden by the turf at all is checked by dmmap.HidesUnder.
+func (e *Editor) IsCoverHidingAt(cover string, coord util.Point) bool {
+	return e.pMap.IsCoverHidingAt(cover, coord)
+}
+
+// IsTileUnderFloorHidden returns true if the mapper doesn't see objects under the floor of the tile.
+func (e *Editor) IsTileUnderFloorHidden(tile *dmmap.Tile) bool {
+	cover := dmmap.TileCover(tile)
+	return cover != "" && e.pMap.IsCoverHidingAt(cover, tile.Coord)
 }
 
 // IsHiddenUnderFloor returns true if the mapper doesn't see the object on the tile because it's under a floor.
 func (e *Editor) IsHiddenUnderFloor(tile *dmmap.Tile, prefab *dmmprefab.Prefab) bool {
-	return dmmap.HidesUnderFloor(prefab) && e.pMap.IsUnderFloorHidden(dmmap.TileCover(tile), tile.Coord)
+	cover := dmmap.HiddenCover(tile, prefab)
+	return cover != "" && e.pMap.IsCoverHidingAt(cover, tile.Coord)
 }
 
 // LightingUnpoweredCount returns the number of lamps on the current level, which don't shine because of the area power.

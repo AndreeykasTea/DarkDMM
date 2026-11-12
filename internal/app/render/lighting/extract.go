@@ -82,7 +82,7 @@ func (e *Extractor) Build(dmm *dmmap.Dmm, z int) (*Grid, []Source) {
 	}
 
 	var scan *powerScan
-	if isBayEnvironment() {
+	if dmmap.IsBaystation() {
 		scan = e.scanMap(dmm)
 	}
 
@@ -237,7 +237,7 @@ func extractInfo(p *dmmprefab.Prefab) *prefabInfo {
 	// Bay fixtures with a bulb type belong to this model in any case. TG fixtures have light_type too,
 	// but they keep their light in brightness and bulb_power.
 	_, hasBulbType := vars.Value("light_type")
-	if isBayVars(vars) || (hasBulbType && dm.IsPath(path, fixturePath) && isBayEnvironment()) {
+	if isBayVars(vars) || (hasBulbType && dm.IsPath(path, fixturePath) && dmmap.IsBaystation()) {
 		extractBaySpecial(info, path, vars)
 		info.isDoor = dm.IsPath(path, "/obj/machinery/door")
 		info.hasLight, info.needsPower, info.light = extractBayAtom(path, vars)

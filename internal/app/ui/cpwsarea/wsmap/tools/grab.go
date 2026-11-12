@@ -53,6 +53,11 @@ func (t *ToolGrab) Bounds() util.Bounds {
 	return t.fillArea
 }
 
+// Level returns the Z level of the selected area.
+func (t *ToolGrab) Level() int {
+	return t.fillStart.Z
+}
+
 func (t *ToolGrab) HasSelectedArea() bool {
 	return t.fillStart != util.Point{}
 }

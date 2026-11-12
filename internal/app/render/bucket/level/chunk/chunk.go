@@ -53,7 +53,7 @@ func (c *Chunk) Update(dmm *dmmap.Dmm, level int) {
 			cover := dmmap.TileCover(tile)
 			for _, i := range tile.Instances() {
 				u := unit.Make(x, y, i, dmmap.WorldIconSize)
-				if cover != "" && dmmap.HidesUnderFloor(i.Prefab()) {
+				if dmmap.HidesUnder(i.Prefab(), cover) {
 					u.SetCoveredBy(cover)
 				}
 				unitsByLayers[u.Layer()] = append(unitsByLayers[u.Layer()], u)

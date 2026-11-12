@@ -26,7 +26,11 @@ func TestAllMaps(t *testing.T) {
 	if root == "" {
 		t.Skip()
 	}
-	env, err := dmenv.New(filepath.Join(root, "baystation12.dme"))
+	dmes, _ := filepath.Glob(filepath.Join(root, "*.dme"))
+	if len(dmes) == 0 {
+		t.Fatal("no .dme")
+	}
+	env, err := dmenv.New(dmes[0])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,10 +46,21 @@ func TestAllMaps(t *testing.T) {
 	t.Logf("access %d, regions %d, jobs %d", len(db.Accesses), len(db.Regions), len(db.Jobs))
 
 	rules := LoadCIRules(root)
-	t.Logf("rules: greps %d, unit %t", len(rules.Greps), rules.UnitTests)
+	lintsCount := 0
+	if rules.Maplint != nil {
+		lintsCount = len(rules.Maplint.Lints)
+		for _, e := range rules.Maplint.Errors {
+			t.Errorf("maplint rule is not loaded: %s", e)
+		}
+	}
+	t.Logf("rules: maplint %d, greps %d, unit %t", lintsCount, len(rules.Greps), rules.UnitTests)
 
 	var maps []string
-	_ = filepath.WalkDir(filepath.Join(root, "maps"), func(p string, d fs.DirEntry, err error) error {
+	mapsDir := filepath.Join(root, "maps")
+	if _, err := os.Stat(mapsDir); err != nil {
+		mapsDir = filepath.Join(root, "_maps") // Paradise and TG.
+	}
+	_ = filepath.WalkDir(mapsDir, func(p string, d fs.DirEntry, err error) error {
 		if err == nil && !d.IsDir() && strings.HasSuffix(p, ".dmm") {
 			maps = append(maps, p)
 		}
@@ -90,7 +105,7 @@ func TestAllMaps(t *testing.T) {
 			dmm, unknown := dmmap.New(env, data, "")
 
 			start := time.Now()
-			issues := Check(env, dmm, Options{Greps: rules.Greps, UnitTests: rules.UnitTests, MapFile: filepath.ToSlash(rel), SavesAsTGM: data.IsTgm})
+			issues := Check(env, dmm, Options{Maplint: rules.Maplint, TextChecks: rules.TextChecks, RequireTGM: rules.TextChecks, Greps: rules.Greps, UnitTests: rules.UnitTests, MapFile: filepath.ToSlash(rel), SavesAsTGM: data.IsTgm})
 			errs, warns, _ := Summary(issues)
 			lintMs := time.Since(start).Milliseconds()
 
@@ -111,7 +126,8 @@ func TestAllMaps(t *testing.T) {
 				_ = res
 			}
 			t.Logf("%-52s %3dx%3dx%d tgm=%-5t unknown=%-3d err=%-3d warn=%-4d lint=%4dms light=%-5d off=%-3d max-share=%.2f%s", rel, dmm.MaxX, dmm.MaxY, dmm.MaxZ, data.IsTgm, len(unknown), errs, warns, lintMs, totalSources, off, worst, note)
-			if worst > .25 {
+			// Small shuttles and arenas could have floors glowing everywhere (lava, light floors), it is fine for them.
+			if worst > .25 && tiles >= 2500 {
 				t.Errorf("%s: too many light sources", rel)
 			}
 			if errs > 0 {

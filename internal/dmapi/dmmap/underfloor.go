@@ -37,6 +37,9 @@ const (
 	bayFloorPath      = "/turf/simulated/floor"
 	bayFloorFixedPath = "/turf/simulated/floor/fixed"
 	bayVentPipePath   = "/obj/machinery/atmospherics/pipe/vent"
+	atmosPipePath     = "/obj/machinery/atmospherics/pipe"
+	// Paradise: pipes in walls are hidden even if they are visible ones (level = 1 in the Initialize of the pipe).
+	paradiseWallPath = "/turf/simulated/wall"
 
 	// UNDERFLOOR_VISIBLE: objects under such a turf are visible, but can't be reached.
 	underfloorVisibleValue = 1
@@ -71,6 +74,16 @@ func detectBaystation() bool {
 	return ok
 }
 
+// Other objects, which the game hides under a floor tile when they have level = 1 (the undertile element in Paradise and TG).
+var underfloorLevelObjects = []string{
+	"/obj/machinery/navbeacon",
+	"/obj/machinery/bluespace_beacon",
+	"/obj/machinery/magnetic_module",
+	"/obj/structure/safe/floor",
+	"/obj/structure/logistics_pipe",
+	"/obj/item/storage/backpack/satchel_flat",
+}
+
 // HidesUnderFloor returns true for objects, which the game hides under a floor tile.
 func HidesUnderFloor(p *dmmprefab.Prefab) bool {
 	path := p.Path()
@@ -80,11 +93,42 @@ func HidesUnderFloor(p *dmmprefab.Prefab) bool {
 		return true
 	case dm.IsPath(path, bayVentPipePath):
 		return false // Only its icon state is changed by the hide proc, the vent stays visible.
-	case dm.IsPath(path, "/obj/machinery/atmospherics/pipe"),
+	case dm.IsPath(path, atmosPipePath),
 		dm.IsPath(path, "/obj/machinery/power/terminal"):
 		return p.Vars().IntV("level", 1) != 2 // Visible pipes have level = 2.
+	case dm.IsPath(path, "/obj/machinery/navbeacon") && isTrue(p.Vars().ValueV("theoretical", "0")):
+		return false // A beacon of the bot path, which isn't placed in the game.
+	}
+	for _, objPath := range underfloorLevelObjects {
+		if dm.IsPath(path, objPath) {
+			return p.Vars().IntV("level", 2) == 1
+		}
 	}
 	return false
+}
+
+func isTrue(value string) bool {
+	return value != "0" && value != "FALSE" && value != dmvars.NullValue && value != ""
+}
+
+// HidesUnder returns true if the object is hidden on a tile, which is covered by the provided turf (see TileCover).
+func HidesUnder(p *dmmprefab.Prefab, cover string) bool {
+	if cover == "" {
+		return false
+	}
+	if HidesUnderFloor(p) {
+		return true
+	}
+	return underfloorModelCurrent == underfloorAccessibility && dm.IsPath(cover, paradiseWallPath) &&
+		dm.IsPath(p.Path(), atmosPipePath)
+}
+
+// HiddenCover returns the turf, which hides the object on the tile, or an empty string.
+func HiddenCover(tile *Tile, p *dmmprefab.Prefab) string {
+	if cover := TileCover(tile); HidesUnder(p, cover) {
+		return cover
+	}
+	return ""
 }
 
 // CoversUnderfloor returns true if the turf hides objects under it.
@@ -97,7 +141,7 @@ func CoversUnderfloor(turf *dmmprefab.Prefab) bool {
 		return vars.IntV("underfloor_accessibility", 0) < underfloorVisibleValue
 	case underfloorIntact:
 		value, ok := vars.Value("intact")
-		return ok && value != "0" && value != "FALSE" && value != dmvars.NullValue
+		return ok && isTrue(value)
 	case underfloorBay:
 		for _, open := range bayOpenTurfs {
 			if dm.IsPath(path, open) {

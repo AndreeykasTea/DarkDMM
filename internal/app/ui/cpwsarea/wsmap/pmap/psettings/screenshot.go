@@ -134,7 +134,7 @@ func (p *Panel) selectScreenshotDir() {
 }
 
 func (p *Panel) ProcessUnit(u unit.Unit) bool {
-	if p.editor.IsUnderFloorHidden(u.CoveredBy(), u.Instance().Coord()) {
+	if p.editor.IsCoverHidingAt(u.CoveredBy(), u.Instance().Coord()) {
 		return false
 	}
 	return p.app.PathsFilter().IsVisiblePath(u.Instance().Prefab().Path())
